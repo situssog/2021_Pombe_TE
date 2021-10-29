@@ -1,0 +1,1299 @@
+# ==================================================
+# Documents and scripts written for the manuscript:
+# Reactivation of transposable elements following hybridization in fission yeast
+# Written by: Sergio Tusso, Fang Suo
+# +++++++++++++++++++++++++++++++++++++++++++++++++
+
+### Genome assemblies:
+
+# This script is used to run Canu assembler.
+
+canuroot=/home/suofang/software/canu-1.8/Linux-amd64/bin
+
+samplelist=(
+JB1180.longreads.lenght1000.fasta
+JB1206.longreads.lenght1000.fasta
+JB22.longreads.lenght1000.fasta
+JB4.longreads.lenght1000.fasta
+JB758.longreads.lenght1000.fasta
+JB760.longreads.lenght1000.fasta
+JB837.longreads.lenght1000.fasta
+JB840.longreads.lenght1000.fasta
+JB854.longreads.lenght1000.fasta
+JB864.longreads.lenght1000.fasta
+JB869.longreads.lenght1000.fasta
+JB873.longreads.lenght1000.fasta
+JB874.longreads.lenght1000.fasta
+JB879.longreads.lenght1000.fasta
+JB929.longreads.lenght1000.fasta
+JB938.longreads.lenght1000.fasta
+JB943.longreads.lenght1000.fasta
+JB953.longreads.lenght1000.fasta
+DY34373.longreads.lenght1000.fasta
+DY39827.longreads.lenght1000.fasta
+)
+
+for i in ${samplelist[@]}
+do
+        echo "-------------------$i-----------------"
+        sample=$i
+        p=$sample"_canu"
+        d=$sample"_canu"
+        $canuroot/canu -p $p -d $d genomeSize=12.5m useGrid=false -pacbio-raw $i
+
+done
+
+echo "canu is done"
+
+
+
+
+# This script is used to assemble JB1180 with smrtpipe.
+
+# Enter into smrtshell environment with username "smrtanalysis"
+[suofang@localhost 0Rawdata]$ bash
+[suofang@localhost 0Rawdata]$ SMRT_ROOT=/opt/smrtanalysis
+[suofang@localhost 0Rawdata]$ source $SMRT_ROOT/current/etc/setup.sh
+(smrtanalysis-2.3.0) [suofang@localhost 0Rawdata]$ $SMRT_ROOT/smrtcmds/bin/smrtshell
+(smrtshell-2.3.0) [smrtanalysis@localhost ~]$ SMRT_ROOT=/opt/smrtanalysis/
+
+
+
+
+# construct JB1180 fofn file "JB1180_pacbio.fofn" shown below
+# /home/suofang/Wild_Strain/Separate/1116/0Rawdata/m170807_070522_42278_c101236212550000001823297112091747_s1_p0.1.bax.h5
+# /home/suofang/Wild_Strain/Separate/1116/0Rawdata/m170807_070522_42278_c101236212550000001823297112091747_s1_p0.2.bax.h5
+# /home/suofang/Wild_Strain/Separate/1116/0Rawdata/m170807_070522_42278_c101236212550000001823297112091747_s1_p0.3.bax.h5
+
+# transform input file
+(smrtshell-2.3.0) [suofang@localhost 0Rawdata]$ fofnToSmrtpipeInput.py JB1180_pacbio.fofn > JB1180_input.xml
+
+# do assembly, all parameters are stored in JB1180_hgap3_params.xml (find it in the filefolder)
+# change options:  minLongReadLength=1000; genomeSize=12500000
+(smrtshell-2.3.0) [suofang@localhost 0Rawdata]$ smrtpipe.py --params=JB1180_hgap3_params.xml xml:JB1180_input.xml
+
+
+
+
+
+# This script is used to run wtdbg assembler.
+
+wtdbgroot=/home/suofang/Software/wtdbg-2.4_x64_linux
+
+###### for strains sequenced by PacBio Sequel, wtdbg options "-x sq"
+samplelist=(
+JB1206.longreads.lenght1000.fasta
+JB22.longreads.lenght1000.fasta
+JB758.longreads.lenght1000.fasta
+JB760.longreads.lenght1000.fasta
+JB837.longreads.lenght1000.fasta
+JB840.longreads.lenght1000.fasta
+JB854.longreads.lenght1000.fasta
+JB864.longreads.lenght1000.fasta
+JB869.longreads.lenght1000.fasta
+JB873.longreads.lenght1000.fasta
+JB874.longreads.lenght1000.fasta
+JB879.longreads.lenght1000.fasta
+JB929.longreads.lenght1000.fasta
+JB938.longreads.lenght1000.fasta
+JB943.longreads.lenght1000.fasta
+JB953.longreads.lenght1000.fasta
+DY34373.longreads.lenght1000.fasta
+DY39827.longreads.lenght1000.fasta
+)
+
+for i in ${samplelist[@]}
+do
+       echo "-------------------$i-----------------"
+       sample=$i
+
+       $wtdbgroot/wtdbg2 -x sq -L 3000 -g 12.5m -t 8 -i $i -fo wtdbg_3000.$i
+       $wtdbgroot/wtpoa-cns -t 8 -i wtdbg_3000.$i.ctg.lay.gz -fo wtdbg_3000.$i.ctg.fa
+ 
+done
+
+###### for strains sequenced by PacBio RS II, wtdbg options "-x rs"
+samplelist=(
+JB1180.longreads.len1000.fasta
+JB4.longreads.len1000.fasta
+)
+
+for i in ${samplelist[@]}
+do
+       echo "-------------------$i-----------------"
+       sample=$i
+
+       $wtdbgroot/wtdbg2 -x rs -L 3000 -g 12.5m -t 8 -i $i -fo wtdbg_3000.$i
+       $wtdbgroot/wtpoa-cns -t 8 -i wtdbg_3000.$i.ctg.lay.gz -fo wtdbg_3000.$i.ctg.fa
+ 
+done
+
+echo "wtdbg is done"
+
+
+# I run it under conda environment
+# conda activate
+
+# firstly construct list.txt formated like this
+# JB22	JB22_canu.fasta
+# JB864	JB864_canu.fasta
+
+
+while read sample assembly
+do
+
+    echo "-----------------$sample---------------"
+    echo "-----------------$assembly"
+
+    ### input
+	contig=$assembly  # assembled contig fasta file
+    subreads=$sample.bam     # raw long reads file
+	
+	### output
+    mapbam=$sample.pbmm2.bam    # pbmm2 mapping file
+    outname=$sample             # output base name
+
+    echo $contig
+    echo $subreads
+    echo $mapbam
+    echo $outname
+
+    samtools faidx $contig
+    pbmm2 align $contig $subreads $mapbam --sort -j 8 -J 8 --preset SUBREAD
+    gcpp -j 8 -r $contig -o $sample.consensus.fasta,$sample.consensus.vcf,$sample.consensus.gff $mapbam
+
+    sed 's/|//' $sample.consensus.fasta > $outname.gcpp.fasta
+
+done < list.txt
+
+echo "gcpp is done"
+
+
+
+# This script is used to run finisherSC
+
+samplelist=(
+DY34373
+DY39827
+JB1180
+JB1206
+JB22
+JB4
+JB758
+JB760
+JB837
+JB840
+JB854
+JB864
+JB869
+JB873
+JB874
+JB879
+JB929
+JB938
+JB943
+JB953
+)
+
+########### for each of strain, do this
+for i in ${samplelist[@]}
+do
+
+mkdir $i
+
+# following the finisherSC github description 
+perl -pe 's/>[^\$]*$/">Seg" . ++$n ."\n"/ge' /data/LongReads/$i.fasta.1000.fasta > raw_reads.fasta
+perl -pe 's/>[^\$]*$/">Seg" . ++$n ."\n"/ge' /data/Assembly/Gcpp/$i.gcpp.fasta > contigs.fasta
+
+# run finisherSC, the output file is "improved3.fasta".
+python /home/suofang/Software/finishingTool-2.1/finisherSC.py $i /home/suofang/Software/MUMmer3.23
+
+done
+
+
+
+
+# I run it under conda environment
+# conda activate
+
+# list.txt is formated like this
+# JB22	JB22_finisherSC.fasta
+# JB864	JB864_finisherSC.fasta
+
+# Actually, it is the same as 2.longreads_polishing1_with_gcpp.sh
+
+while read sample assembly
+do
+
+    echo "-----------------$sample---------------"
+    echo "-----------------$assembly"
+
+    ### input
+	contig=$assembly  # assembled contig fasta file
+    subreads=$sample.bam     # raw long reads file
+	
+	### output
+    mapbam=$sample.pbmm2.bam    # pbmm2 mapping file
+    outname=$sample             # output base name
+
+    echo $contig
+    echo $subreads
+    echo $mapbam
+    echo $outname
+
+    samtools faidx $contig
+    pbmm2 align $contig $subreads $mapbam --sort -j 8 -J 8 --preset SUBREAD
+    gcpp -j 8 -r $contig -o $sample.consensus.fasta,$sample.consensus.vcf,$sample.consensus.gff $mapbam
+
+    sed 's/|//' $sample.consensus.fasta > $outname.gcpp.fasta
+
+done < list.txt
+
+echo "gcpp is done"
+
+
+
+
+### This script is used to run quast for assembly evaluation.
+
+# quast list is formated like this
+# JB22.canu.gcpp.finisherSC.gcpp.fasta	pombe_reference.fasta	JB22.canu.gcpp.finisherSC.gcpp
+# JB864.canu.gcpp.finisherSC.gcpp.fasta	pombe_reference.fasta	JB864.canu.gcpp.finisherSC.gcpp
+
+
+while read ass ref out
+do 
+    echo "===$ass"
+    echo "===$ref"
+    echo "===$out"
+
+
+        /home/suofang/Software/quast-5.0.2/quast.py $ass -r $ref -o $out.quast
+
+
+done < quast.list
+
+
+echo "finished"
+
+
+
+
+
+
+
+
+
+#### First I change contig names as in Tusso et al. 2019.
+
+# running MUMmer with a list of fasta files:
+refernce_genome=./PombeRef_withAB325691.fa
+for i in $(ls -1 *.fasta)
+do output_file_ext=$(basename $i) 
+output_file=${output_file_ext%.*} 
+echo $output_file
+./10_mummer.sh $refernce_genome $i ref_LR_$output_file 
+done
+
+#### change contig names:
+for i in $(ls -1 *.fasta | sed 's/\.fasta//g' )
+do ./changeContigName.sh $i 
+done
+
+
+# SNPS from PB
+# wd: /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/all21_samples
+module load bioinfo-tools MUMmer/3.23 BioPerl/1.6.924_Perl5.18.4
+
+cp /proj/uppstore2017159/b2014286_nobackup/private/jeffares/VCF_RaxMl/Pomberef.fasta ./
+# change label names to something simpler
+sed -e 's/>MT dna:chromosome chromosome:ASM294v2:MT:1:19431:1/>MT/g'  Pomberef.fasta | sed -e 's/>AB325691 dna:chromosome chromosome:ASM294v2:AB325691:1:20000:1/>AB325691/g'  | sed -e 's/>MTR dna:chromosome chromosome:ASM294v2:MTR:1:20128:1/>MTR/g'   | sed -e 's/>III dna:chromosome chromosome:ASM294v2:III:1:2452883:1/>III/g'  | sed -e 's/>II dna:chromosome chromosome:ASM294v2:II:1:4539804:1/>II/g'  | sed -e 's/>I dna:chromosome chromosome:ASM294v2:I:1:5579133:1/>I/g' > Pomberef_ed.fasta
+reference_genome=Pomberef_ed.fasta
+
+module load bioinfo-tools bwa/0.7.17 samtools
+bwa index Pomberef_ed.fasta
+samtools faidx Pomberef_ed.fasta
+
+module load bioinfo-tools MUMmer/3.23
+module load BioPerl/1.7.2_Perl5.26.2
+reference_genome=Pomberef_ed.fasta
+
+grep ">" $reference_genome | sed 's/>//g' > chrom_names.txt
+
+for sample in $(cat list_samples.txt | sed 's/.fasta//g'); do echo $sample 
+head -4 filtered_ref_align_$sample.snps > filtered_ed_ref_align_$sample.snps
+for chrom in $(cat chrom_names.txt); do echo $chrom
+grep -w $chrom filtered_ref_align_$sample.snps >> filtered_ed_ref_align_$sample.snps
+done
+perl ./alignment/06_SV_MUMmer_PB/mummer2Vcf.pl -f $reference_genome filtered_ed_ref_align_$sample.snps > ref_align_$sample.vcf
+done
+
+reference_genome=Pomberef_ed.fasta
+sample=JB22_EBC2
+for sample in $(cat WL_samples.txt); do echo $sample 
+./mummer_SNPvar.sh $reference_genome $sample ref_align_$sample
+head -4 filtered_ref_align_$sample.snps > filtered_ed_ref_align_$sample.snps
+for chrom in $(cat chrom_names.txt); do echo $chrom
+grep -w $chrom filtered_ref_align_$sample.snps >> filtered_ed_ref_align_$sample.snps
+done
+./mummer2Vcf.sh $reference_genome filtered_ed_ref_align_$sample.snps ref_align_$sample.vcf
+done
+
+
+
+# Phylogenetic analyses - RaxML
+reference_genome=Pomberef_ed.fasta
+sample=JB22_EBC2
+
+for sample in $(cat WL_samples.txt LL_samples.txt); do echo $sample 
+awk '{if ($2!=".") print $0 }' filtered_ref_align_$sample.snps | grep "^[0-9]" > PB_mummer_$sample.snps
+show-diff ref_align_$sample.delta > SV_ref_align_$sample.diff
+grep GAP SV_ref_align_$sample.diff > PB_GAPS_mummer_$sample
+# the next script will take the reference genome (fasta format), and will put "N" in regions with gaps, taking the information from the PB_GAPS_mummer_$sample file. Then it will substitute snps using the PB_mummer_$sample.snps file
+# in cases where there is a deletion, the script changes the bp to "N"
+python ./edit_ref_genome_snps.py $reference_genome PB_GAPS_mummer_$sample PB_mummer_$sample.snps > seq_genome_$sample.fasta 
+sed -i 's/>/>'$sample'_/g' seq_genome_$sample.fasta
+done
+
+
+cat seq_genome_*fasta | grep "_MT$" --no-group-separator -A 1 > alignment_MT.fasta
+cat seq_genome_*fasta | grep "_I$" --no-group-separator -A 1 > alignment_I.fasta
+cat seq_genome_*fasta | grep "_II$" --no-group-separator -A 1 > alignment_II.fasta
+cat seq_genome_*fasta | grep "_III$" --no-group-separator -A 1 > alignment_III.fasta
+
+module load Fastx
+for i in $(ls alignment_*); do fasta_formatter -i $i -w 0 > format.$i; done
+
+mkdir MT_tree
+mkdir I_tree
+mkdir II_tree
+mkdir III_tree
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh ./format.alignment_MT.fasta
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh ./format.alignment_I.fasta
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh ./format.alignment_II.fasta
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh ./format.alignment_III.fasta
+# Jobs: 11884670, 11884857 - 11884859
+
+## Adding Illumina data: 
+
+module load bioinfo-tools vcftools
+
+# extract snps by chromosome:
+vcftools --vcf ./Spombe.2013-01-02.filt3c.nr57-final.snps.anno-snpeff3.cleaned.vcf --chr I --recode --recode-INFO-all --out chromosome_I_all57.vcf
+vcftools --vcf ./Spombe.2013-01-02.filt3c.nr57-final.snps.anno-snpeff3.cleaned.vcf --chr II --recode --recode-INFO-all --out chromosome_II_all57.vcf
+vcftools --vcf ./Spombe.2013-01-02.filt3c.nr57-final.snps.anno-snpeff3.cleaned.vcf --chr III --recode --recode-INFO-all --out chromosome_III_all57.vcf
+vcftools --vcf ./Spombe.2013-01-02.filt3c.nr57-final.snps.anno-snpeff3.cleaned.vcf --chr MT --recode --recode-INFO-all --out chromosome_MT_all57.vcf
+
+# to check that I'm using the right reference genome
+module load vcflib
+vcfcheck -x -f ./All_Illu_LR_trees/Pomberef_ed.fasta chromosome_I_all57.vcf.recode.vcf
+
+# delete positions with missing data
+module load bcftools
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%SAMPLE=%GT]\n' chromosome_I_all57.vcf.recode.vcf | grep "=\." | awk '{print $1, $2}' > list_with_genotype_I.txt
+vcftools --vcf chromosome_I_all57.vcf.recode.vcf --exclude-positions list_with_genotype_I.txt --recode --recode-INFO-all --out chromosome_I_all57_clean
+
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%SAMPLE=%GT]\n' chromosome_II_all57.vcf.recode.vcf | grep "=\." | awk '{print $1, $2}' > list_with_genotype_II.txt
+vcftools --vcf chromosome_II_all57.vcf.recode.vcf --exclude-positions list_with_genotype_II.txt --recode --recode-INFO-all --out chromosome_II_all57_clean
+
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%SAMPLE=%GT]\n' chromosome_III_all57.vcf.recode.vcf | grep "=\." | awk '{print $1, $2}' > list_with_genotype_III.txt
+vcftools --vcf chromosome_III_all57.vcf.recode.vcf --exclude-positions list_with_genotype_III.txt --recode --recode-INFO-all --out chromosome_III_all57_clean
+
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%SAMPLE=%GT]\n' chromosome_MT_all57.vcf.recode.vcf | grep "=\." | awk '{print $1, $2}' > list_with_genotype_MT.txt
+vcftools --vcf chromosome_MT_all57.vcf.recode.vcf --exclude-positions list_with_genotype_MT.txt --recode --recode-INFO-all --out chromosome_MT_all57_clean
+
+grep ">" Pomberef_ed.fasta | sed 's/>//g' > list_chr
+
+module load python/2.7.15 biopython/1.73
+
+for sample in $(cat list_chr); 
+do python ./subsetfastaID.py Pomberef_ed.fasta $sample
+done
+
+/crex./alignment/07_genome_alignments_PB/jeffares_2015
+
+module load vcflib
+vcf2fasta -f Pomberef_ed_I.fas -P 1 chromosome_I_all57_clean.recode.vcf
+ls -1 JB*_I:0.fasta | sed 's/_I:0.fasta//g' > list_samples
+for sample in $(cat list_samples); 
+do sed -i 's/>I/>'$sample'_I_ILL/g' $sample"_I:0.fasta" 
+done
+
+vcf2fasta -f Pomberef_ed_II.fas -P 1 chromosome_II_all57_clean.recode.vcf
+for sample in $(cat list_samples); 
+do sed -i 's/>II/>'$sample'_II_ILL/g' $sample"_II:0.fasta" 
+done
+
+vcf2fasta -f Pomberef_ed_III.fas -P 1 chromosome_III_all57_clean.recode.vcf
+for sample in $(cat list_samples); 
+do sed -i 's/>III/>'$sample'_III_ILL/g' $sample"_III:0.fasta" 
+done
+
+vcf2fasta -f Pomberef_ed_MT.fas -P 1 chromosome_MT_all57_clean.recode.vcf
+for sample in $(cat list_samples); 
+do sed -i 's/>MT/>'$sample'_MT_ILL/g' $sample"_MT:0.fasta" 
+done
+
+module load Fastx
+for i in $(ls JB*); do fasta_formatter -i $i -w 0 > format.$i; done
+
+cat format.JB*_I:*fasta > all57_chr_I.fasta
+cat format.JB*_II:*fasta > all57_chr_II.fasta
+cat format.JB*_III:*fasta > all57_chr_III.fasta
+cat format.JB*_MT:*fasta > all57_chr_MT.fasta
+
+cat ../format.alignment_MT.fasta all57_chr_MT.fasta > both_MT.fasta
+cat ../format.alignment_I.fasta all57_chr_I.fasta > both_I.fasta
+cat ../format.alignment_II.fasta all57_chr_II.fasta > both_II.fasta
+cat ../format.alignment_III.fasta all57_chr_III.fasta > both_III.fasta
+
+mkdir MT_tree
+mkdir I_tree
+mkdir II_tree
+mkdir III_tree
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh ./All_Illu_LR_trees/both_MT.fasta
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh ./All_Illu_LR_trees/both_I.fasta
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh ./All_Illu_LR_trees/both_II.fasta
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh ./All_Illu_LR_trees/both_III.fasta
+# Jobs: 11898831 - 11898834
+
+
+
+# Compiling VCF file for PCAs:
+module load java
+module load bioinfo-tools vcftools
+java -jar ./tools/jvarkit/dist/msa2vcf.jar -R Pomberef_ed_all.fas --haploid ../both_I.fasta
+java -jar ./tools/jvarkit/dist/msa2vcf.jar -R Pomberef_ed_all.fas --haploid ../both_II.fasta
+java -jar ./tools/jvarkit/dist/msa2vcf.jar -R Pomberef_ed_all.fas --haploid ../both_III.fasta
+
+java -jar ./tools/jvarkit/dist/msa2vcf.jar --haploid ../both_I.fasta > both_I.vcf
+sed -i 's/chrUn/I/g' both_I.vcf
+vcftools --vcf both_I.vcf --remove-indv JB870_I --min-alleles 2 --max-alleles 2 --maf 0.02 --recode --recode-INFO-all --out both_ed_I.vcf
+
+java -jar ./tools/jvarkit/dist/msa2vcf.jar --haploid ../both_II.fasta > both_II.vcf
+sed -i 's/chrUn/II/g' both_II.vcf
+vcftools --vcf both_II.vcf --remove-indv JB870_II --min-alleles 2 --max-alleles 2 --maf 0.02 --recode --recode-INFO-all --out both_ed_II.vcf
+
+java -jar ./tools/jvarkit/dist/msa2vcf.jar --haploid ../both_III.fasta > both_III.vcf
+sed -i 's/chrUn/III/g' both_III.vcf
+vcftools --vcf both_III.vcf --remove-indv JB870_III --min-alleles 2 --max-alleles 2 --maf 0.02 --recode --recode-INFO-all --out both_ed_III.vcf
+
+# PCAs
+sbatch ./PCA_plots_byWindows.sh 200 100 I both_ed_I.vcf.recode.vcf 
+sbatch ./PCA_plots_byWindows_withPlots.sh 200 100 II both_ed_II.vcf.recode.vcf
+sbatch ./PCA_plots_byWindows.sh 200 100 III both_ed_III.vcf.recode.vcf
+
+# using JB22 to polirise PCAs
+sbatch ./PCA_plots_byWindows.sh 200 100 I both_ed_I.vcf.recode.vcf 
+sbatch ./PCA_plots_byWindows.sh 200 100 II both_ed_II.vcf.recode.vcf
+sbatch ./PCA_plots_byWindows.sh 200 100 III both_ed_III.vcf.recode.vcf
+
+cat t_total_PC1_prop_I_200_100_*.txt > total_PC1_prop_I_200_100.txt
+cat t_total_PC1_prop_II_200_100_*.txt > total_PC1_prop_II_200_100.txt
+cat t_total_PC1_prop_III_200_100_*.txt > total_PC1_prop_III_200_100.txt
+
+cat t_varprop_I_200_100_*.txt > varprop_I_200_100.txt
+cat t_varprop_II_200_100_*.txt > varprop_II_200_100.txt
+cat t_varprop_III_200_100_*.txt > varprop_III_200_100.txt
+
+cat total_PC1_prop_*_200_100.txt > all_total_PC1_prop_200_100.txt
+cat varprop_*_200_100.txt > all_varprop_200_100.txt
+
+
+sed -i 's/_III//g' all_total_PC1_prop_200_100.txt
+sed -i 's/_II//g' all_total_PC1_prop_200_100.txt
+sed -i 's/_I//g' all_total_PC1_prop_200_100.txt
+sed -i 's/LL/_ILL/g' all_total_PC1_prop_200_100.txt
+
+# Then ancestral blocks and plots were infered using the script "./plots_within_pop1_andDiversity_btw_haplotypes.R"
+# this script produces a table "ancestralhap_57ILL_LR.txt" with distribution of ancestral blocks along the genome for each sample. 
+
+
+
+#CARP:
+module load bioinfo-tools
+module load blast/2.2.26
+module load go/1.11.5
+module load git/2.16.1
+export PATH=$PATH:$(go env GOPATH)/bin
+
+module load  BioPerl/1.7.2_Perl5.24.1
+export PATH=$PATH:/sw/apps/bioinfo/blast/2.7.1+/rackham/bin
+export PATH=$PATH:./tools/censor-4.2.29/bin
+
+
+module load muscle/3.8.31
+
+#identify pairwise repeats
+matrix -threads=4 -krishnaflags="-tmp=./ -threads=4 -log -filtid=0.80 -filtlen=100" chr*.fa
+
+# produce json file
+find ./ -maxdepth 1 -name '[!.]*.gff' -print0 | xargs -r0 cat > hg_krishna.gff
+igor -in hg_krishna.gff -out hg94_krishna.json
+
+# Use seqer to generate consensus sequences from genome intervals
+gffer < hg94_krishna.json > hg94_krishna.igor.gff
+cat chr*.fa > hg19v37.mfa
+seqer -aligner=muscle -dir=consensus2 -fasta=true -maxFam=0 -subsample=true -minLen=0.95 -threads=4 -ref=hg19v37.mfa hg94_krishna.igor.gff
+
+# Annotate families:
+find ./consensus -maxdepth 1 -name '[!.]*.fq' -print0 | xargs -r0 cat > ConsensusSequences.fa
+module load bioinfo-tools blast/2.2.26
+censor.ncbi -debug -lib ./fungi.fa -lib ./pombe_repeats.fa ConsensusSequences.fa
+
+mkdir results_classify
+cp ./tools/CARP/carp_for_raylab/code/ClassifyConsensusSequences.java ./
+sed -i 's/annotationfiles\/Vertebrate_use.fa/fungi.fa/g' ClassifyConsensusSequences.java
+sed -i 's/annotationfiles\/our_known_reps_20130520.fasta/pombe_repeats.fa/g' ClassifyConsensusSequences.java
+module load java
+javac ClassifyConsensusSequences.java
+java ClassifyConsensusSequences
+
+#module load blast/2.7.1+
+#makeblastdb -in ./tools/CARP/uniprot_sprot.fasta -dbtype prot
+
+
+# 1. Identify potential protein sequences
+module load blast/2.7.1+
+sbatch blast_pro.sh
+awk '{print $1"\t""blast""\t""hit""\t"$7"\t"$8"\t"$11"\t"".""\t"".""\t""Target sp|"$2" "$9" "$10}' notKnown.fa.spwb.ncbi > tmp
+awk '{if($4>$5) print $1"\t"$2"\t"$3"\t"$5"\t"$4"\t"$6"\t"$7"\t"$8"\t"$9" "$10" "$11" "$12; else print $0}' tmp > notKnown.fa.spwb.gff
+
+
+# 2. Identify GB_TE sequences
+# I extracted protein sequenced from NCBI using the search terms: reverse transcriptase or transposon or repetitive element or RNA-directed DNA polymerase or pol protein or non-LTR retrotransposon or mobile element or retroelement or polyprotein or retrovirus or polymerase 
+# I downloaded the file as FASTA file
+module load bioinfo-tools BioPerl/1.7.2_Perl5.24.1
+esearch -db protein -query "reverse transcriptase or transposon or repetitive element or RNA-directed DNA polymerase or pol protein or non-LTR retrotransposon or mobile element or retroelement or polyprotein or retrovirus or (group-specific antigen gag) or polymerase (pol)" | efetch -format fasta > temporal_GB_TE.fa
+I put this in the script: 
+sbatch search_seq.sh
+#job - 8514663
+module load bioinfo-tools  blast/2.7.1+
+makeblastdb -in seq_GB_TE.fa -dbtype prot -out GB_TE.new
+blastx -db /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/GB_TE.new -query notKnown.fa -max_hsps 1 -seg no -evalue 0.00001 -num_threads 4 -max_target_seqs 1 -word_size 2 -outfmt 6 -out notKnown.fa.tewb.ncbi
+awk '{print $1"\t""blast""\t""hit""\t"$7"\t"$8"\t"$11"\t"".""\t"".""\t""Target sp|"$2" "$9" "$10}' notKnown.fa.tewb.ncbi > tmp
+awk '{if($4>$5) print $1"\t"$2"\t"$3"\t"$5"\t"$4"\t"$6"\t"$7"\t"$8"\t"$9" "$10" "$11" "$12; else print $0}' tmp > notKnown.fa.tewb.gff
+
+
+# 3. Identify potential retrovirus sequences
+module load bioinfo-tools blast/2.7.1+
+makeblastdb -in sequence_viruses.fasta -dbtype nucl
+tblastx -db /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/sequence_viruses.fasta -query notKnown.fa -max_hsps 1 -seg no -evalue 0.00001 -num_threads 4 -max_target_seqs 1 -word_size 2 -outfmt 6 -out temporal_notKnown.fa.ervwb.ncbi
+# Or with a job:
+sbatch blast_vir.sh
+I didn´t get any match
+awk '{print $1"\t""blast""\t""hit""\t"$7"\t"$8"\t"$11"\t"".""\t"".""\t""Target sp|"$2" "$9" "$10}' notKnown.fa.ervwb.ncbi > tmp
+awk '{if($4>$5) print $1"\t"$2"\t"$3"\t"$5"\t"$4"\t"$6"\t"$7"\t"$8"\t"$9" "$10" "$11" "$12; else print $0}' tmp > notKnown.fa.ervwb.gff
+
+
+# Get protein information from consensus sequences
+cp ./tools/CARP/carp_for_raylab/code/GetProteins.java ./
+module load java
+sed -i 's/ProteinReport/./g' GetProteins.java
+javac GetProteins.java
+java GetProteins
+
+
+# final consesus repeat annotation
+cp ../ConsensusSequences.fa ../ConsensusSequences.fa.map ../seq_GB_TE.fa ../sequence_viruses.fasta ./
+cp ./tools/CARP/carp_for_raylab/code/GenerateAnnotatedLibrary.java ./
+
+mkdir final
+mkdir results_classify
+mkdir finallibrary
+mkdir annotationfiles
+cp ../ConsensusSequences.fa ../ConsensusSequences.fa.map ../notKnown.fa.ervwb.gff ../protein.txt ../known.txt ../notKnown.fa.tewb.gff ./results_classify/ 
+cp ../ConsensusSequences.fa ../ConsensusSequences.fa.map ./
+cp ../seq_GB_TE.fa ./annotationfiles/GB_TE.fa
+cp ../sequence_viruses.fasta ./annotationfiles/all_retrovirus.fasta
+touch ./results_classify/SSR.txt
+
+perl -pi -e "s/^>/>gi|GBTE|sp|/g" ./annotationfiles/GB_TE.fa
+sed -i 's/ /| /' ./annotationfiles/GB_TE.fa
+
+perl -pi -e "s/^>/>gi|GBTE|sp|/g" ./annotationfiles/all_retrovirus.fasta
+sed -i 's/ /| /' ./annotationfiles/all_retrovirus.fasta
+
+perl -pi -e "s/^>/>gi|GBTE|sp|/g" pombe_repeats.fa
+sed -i 's/ /| /' pombe_repeats.fa
+
+cp ../GenerateAnnotatedLibrary.java ./
+javac GenerateAnnotatedLibrary.java
+java GenerateAnnotatedLibrary
+
+
+module load bioinfo-tools
+module load bioinfo-tools RepeatMasker/4.0.8
+cat pombe_repeats.fa Denovo_TE_Library_temporal.fasta > combined_library2.fa
+makeblastdb -in combined_library2.fa -dbtype nucl
+RepeatMasker -pa 4 -a -nolow -norna -dir ./ -lib combined_library2.fa hg19v37.mfa
+
+cat wtf_ref.fasta all_wtf_CBS5557.fa Denovo_TE_Library_temporal.fasta > combined_library_wtf.fa
+makeblastdb -in combined_library_wtf.fa -dbtype nucl
+RepeatMasker -pa 4 -a -nolow -norna -dir ./ -lib combined_library_wtf.fa hg19v372.mfa
+RepeatMasker -pa 4 -a -nolow -norna -dir ./ -lib Denovo_TE_Library_temporal.fasta wtf_ref.fasta
+RepeatMasker -pa 4 -a -nolow -norna -dir ./ -lib wtf_ref.fasta hg19v372.mfa
+RepeatMasker -pa 4 -a -nolow -norna -dir ./ -lib combined_library_wtf_onlyref.fa hg19v373.mfa
+RepeatMasker -s -species ascomycetes -pa 4 hg19v372.mfa
+RepeatMasker -s -species ascomycetes -pa 4 wtf_ref.fasta
+
+
+
+#### LTR finder:
+module load bioinfo-tools LTR_Finder/1.0.7
+$LTR_FINDER_GTRNADB/GtRNAdb-all-tRNAs.fa
+ltr_finder JB22_EBC2.fasta -w2
+./LTR_finder.sh 
+
+ls -1 ../*_ed.fa | sed 's/\.\.\///g' | sed 's/_ed.fa//g' | grep -wv JB870 > list_samples.txt
+for sample in $( cat list_samples.txt ); do cp ../$sample"_ed".fa $sample.fasta ; done
+
+for sample in $( cat list_samples.txt ); 
+do sbatch ./LTR_finder.sh $sample 
+done
+
+
+# LTR_RepeatMasker
+
+module load bioinfo-tools RepeatMasker/4.0.8
+makeblastdb -in pombe_TF_refrepeats.fa -dbtype nucl
+
+sbatch ./RepeatMasker.sh pombe_TF_refrepeats.fa $sample.fasta
+
+for sample in $( cat list_samples.txt ); 
+do sbatch ./RepeatMasker.sh pombe_TF_refrepeats.fa $sample.fasta
+done
+
+# LTR_RepeatMasker_allseq
+# For the first run, I used the consensus TF2 and TF107 to identify sequence. One potential problem is that sequences that are highly divergent from those two sequences could have been excluded. I did this second test, using as library sequences all the full-length TF elements identified before:
+
+module load bioinfo-tools RepeatMasker/4.0.8
+module load blast/2.9.0+
+makeblastdb -in all_tf_masked_conSeq_minLen3000.fa -dbtype nucl
+
+sbatch ./RepeatMasker.sh all_tf_masked_conSeq_minLen3000.fa $sample.fasta
+
+for sample in $( cat list_samples.txt ); 
+do sbatch ./RepeatMasker.sh all_tf_masked_conSeq_minLen3000.fa $sample.fasta
+done
+
+
+##### EDTA:
+conda activate EDTA
+
+awk '{print "I\t"$2"\t"$3}' chromosome1.cds.coords > I.genome.exclude.bed 
+awk '{print "II\t"$2"\t"$3}' chromosome2.cds.coords > II.genome.exclude.bed 
+awk '{print "III\t"$2"\t"$3}' chromosome3.cds.coords > III.genome.exclude.bed 
+
+sed -i 's/unitig_//g' JB1180.fasta
+sed -i 's/|quiver//g' JB1180.fasta
+
+cat *.genome.exclude.bed > genome.exclude.bed
+
+perl /dss/dsslegfs01/pn29fi/pn29fi-dss-0003/software/EDTA/EDTA.pl --genome Pomberef.fasta --cds cds.fa --curatedlib ./pombe_repeats_withTF1_2_only.fa --exclude genome.exclude.bed --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads 10
+
+for sample in $( cat list_samples.txt )
+do
+sbatch /dss/dsshome1/lxc03/di36guz2/private/Uppsala/Analyses/04_Genomic_analyses//09_TE/scripts_all21Samples/EDTA_script.sh $sample
+done
+
+
+# looking for identified sequences overlapping with genes:
+
+conda activate env_others
+
+grep -wvf tf_IDs.txt ./EDTA/chromosome*.cds.coords | sed 's/\/dss\/dsslegfs01\/pr53da\/pr53da-dss-0022\/nobackup\/private\/pac_bio\/02_TE\/all21_samples\/EDTA\///g' | sed 's/.cds.coords:/\t/g' | sed 's/chromosome3/III/g' | sed 's/chromosome2/II/g' | sed 's/chromosome1/I/g' | awk '{print $1"\t"$3"\t"$4"\t"$2"\t"$5}' > gene_ref_annotation.bed
+
+grep -wv repeat_region  allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_Pomberef_refCoor_ltrColumns.txt | grep -wv long_terminal_repeat | grep -wv target_site_duplication | grep -wv Gypsy_LTR_retrotransposon | grep -P "\t0\t0\t0" | awk '{print $1"\t"$4"\t"$5"\t"$3"\t"$16}' > non_LTR_annotatedSeq_Pomberef.bed
+
+bedtools intersect -loj -a non_LTR_annotatedSeq_Pomberef.bed -b gene_ref_annotation.bed
+ | awk '{print $0"\t"$3-$2"\t"$7-$6}' | grep -vP "\t0$" | awk '{print $4}' | sort | uniq -c | sed -e 's/^[[:space:]]*//' | awk -F  " " '{print $2"\t"$1}' > EDTASeq_in_OriAnalysis_$sample"_"foundSeq.txt
+
+
+
+##### LiftOvers:
+##### flo
+
+for sample in $( ls -1 EBC*fa | sed 's/_pilon.fa//g' )
+do
+sbatch ./liftOver.sh $sample 
+done
+sbatch ./liftOver_ref.sh ref
+
+# or using the masked reference: 
+for sample in $( ls -1 EBC*fa | sed 's/_pilon.fa//g' )
+do
+sbatch ./liftOver_masked.sh $sample 
+done
+sbatch ./liftOver_ref_masked.sh ref
+
+cat dir_ext_masked_*liftover/final*_refCoor.txt | awk 'function abs(v) {return v < 0 ? -v : v}{print $4"\t"$5"_"$6"_"$7"_"abs($3-$2)}' > all_annotation_refCoor_Masked.bed
+
+
+
+# Using the output from EDTA: 
+# cd ./EDTA_flo
+
+conda activate env_others
+
+cp ./flo/repeatmasker_ref/usingCOnsensusSeq/Pomberef_ed.fa.masked ./ref_masked_conSeq.fa
+cp ../LTR_finder/*fasta .
+cp ../LTR_finder/list_samples.txt .
+
+
+for sample in $( cat list_samples.txt ) 
+do sbatch ./liftOver_masked_conSeq_EDTA_allseq.sh $sample ./EDTA/$sample.fasta.mod.EDTA.TEanno.gff3
+done
+
+conda activate r_env
+
+for sample in $( cat list_samples.txt ) 
+do sbatch ./liftOver_masked_conSeq_EDTA_allseq_2.sh $sample ./EDTA/$sample.fasta.mod.EDTA.TEanno.gff3
+done
+
+for sample in $( cat list_samples.txt ) 
+do echo $sample
+awk '{print $1}' tem_final_*_refCoor.txt | sort | uniq | wc -l ; cat *_scafolds.txt | wc -l
+done
+
+
+# Job using parallel jobs pre scafold:
+conda activate r_env
+for sample in $( cat list_samples.txt ) 
+do sbatch ./liftOver_masked_conSeq_EDTA_allseq_parallel.sh $sample ./EDTA/$sample.fasta.mod.EDTA.TEanno.gff3
+done
+
+
+
+##### Merging annotations 
+######## using masked annotation but with consensus sequences during the masking ########
+ls -1 ../*ed.fa | sed 's/\.\.\///g' | sed 's/_ed\.fa//g' | grep -v JB870 > list_samples.txt
+cp ../flo/all_annotation_refCoor_Masked_conSeq_edSim.bed .
+module load bioinfo-tools python/2.7.15 biopython/1.73
+
+for sample in $( cat list_samples.txt )
+do 
+echo $sample
+#produce total annotation table
+grep -vw "family.*_consensus " /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/all21_samples/CARP/dir_$sample""/results_classify/final/$sample"_"annotation.fa.out | grep -v "^$" | grep -v "class/family" | grep -v "repeat" | awk '{print $5"\t"$6"\t"$7"\t"$10"\t"$9"\t"$11"\t"$10"_""'$sample'""_"NR}' | sed 's/family......_consensus\://g' | sed 's/_pilon//g' > annotation_$sample.txt
+# produce list of identified families
+grep -vw "family.*_consensus " /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/all21_samples/CARP/dir_$sample/results_classify/final/$sample"_"annotation.fa.out | grep -v "^$" | grep -v "class/family" | grep -v "repeat" | awk '{print $10}' | sort | uniq > all_families_$sample.txt
+#
+# LTRs:
+#module load bioinfo-tools python/2.7.15 biopython/1.73
+grep LTR all_families_$sample.txt | sed 's/family......_consensus\://g' | sort | uniq > ltr_found_$sample.txt
+python ./extract_seq.py ../$sample"_ed".fa annotation_$sample.txt ltr_found_$sample.txt all_annotation_refCoor_Masked_conSeq_edSim.bed $sample ltr_masked_conSeq 100
+python ./extract_seq.py ../$sample"_ed".fa annotation_$sample.txt ltr_found_$sample.txt all_annotation_refCoor_Masked_conSeq_edSim.bed $sample ltr_masked_conSeq 200
+#
+# TFs:
+grep -wf list_tf_loci.txt all_families_$sample.txt | sed 's/family......_consensus\://g' | sort | uniq > tf_found_$sample.txt
+python ./extract_seq.py ../$sample"_ed".fa annotation_$sample.txt tf_found_$sample.txt all_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 2000 
+python ./extract_seq.py ../$sample"_ed".fa annotation_$sample.txt tf_found_$sample.txt all_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 1000 
+python ./extract_seq.py ../$sample"_ed".fa annotation_$sample.txt tf_found_$sample.txt all_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 0 
+done
+
+
+# Alignmrnt of flanking LRT from completed TE sequnces.
+module load bioinfo-tools RepeatMasker/4.0.8
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib solo_ltr_lib.fasta tf_simpleID.fasta
+grep -v "^$" tf_simpleID.fasta.out | grep -v "class/family" | grep -v "repeat" | awk '{if ($2<2) print $5"\t"$6"\t"$7"\t"$10}' > annotation_table_ltf_simpleID.fasta.out 
+awk '{print $4}' annotation_table_ltf_simpleID.fasta.out | sort | uniq > list_ltr_included.txt
+module load python biopython
+python ./scripts/08_extract_seq_masked_conSeq_completed_ltr.py tf_simpleID.fasta annotation_table_ltf_simpleID.fasta.out ltr complete_ltr 200 
+
+# and using only sequences from the reference genome in order to compare results with previous work:
+cat ../ref_ltr_masked_conSeq_minLen200.fasta > ref_solo_ltr_lib.fasta
+sed -i 's/_LTRTF2_comp_//g' ref_solo_ltr_lib.fasta
+sed -i 's/_LTRTF2_plus_//g' ref_solo_ltr_lib.fasta
+sed 's/TF2_I_plus_len//g' ../ref_tf_masked_conSeq_minLen1000.fasta > ref_tf_simpleID.fasta
+sed -i 's/TF2_I_comp_len//g' ref_tf_simpleID.fasta
+sed -i 's/TF1_107_plus_len//g' ref_tf_simpleID.fasta
+sed -i 's/TF1_107_comp_len//g' ref_tf_simpleID.fasta
+
+module load bioinfo-tools RepeatMasker/4.0.8
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib solo_ltr_lib.fasta ref_tf_simpleID.fasta
+grep -v "^$" ref_tf_simpleID.fasta.out | grep -v "class/family" | grep -v "repeat" | awk '{if ($2<2) print $5"\t"$6"\t"$7"\t"$10}' > ref_annotation_table_ltf_simpleID.fasta.out 
+awk '{print $4}' ref_annotation_table_ltf_simpleID.fasta.out | sort | uniq > ref_list_ltr_included.txt
+module load python biopython
+python ./scripts/08_extract_seq_masked_conSeq_completed_ltr.py ref_tf_simpleID.fasta ref_annotation_table_ltf_simpleID.fasta.out ltr ref_complete_ltr 200 
+
+
+
+### LTR:
+module load bioinfo-tools RepeatMasker/4.0.8
+RepeatMasker -pa 5 -a -nolow -norna -dir ./ -lib solo_ltrs.fasta tf_minLen1000.fasta
+grep -v "^$" tf_minLen1000.fasta.out | grep -v "class/family" | grep -v "repeat" | awk '{if ($2<2) print $5"\t"$6"\t"$7"\t"$10}' > annotation_table_tf_minLen1000.fasta.out 
+module load python biopython
+python extract_seq_ltr.py tf_minLen1000.fasta annotation_table_tf_minLen1000.fasta.out tf complete_ltr 200 
+# alignment:
+sbatch aligment_mafft.sh tf_complete_ltr_minLen200.fasta tf_complete_ltr_minLen200
+
+# Using masking files but with consensus library:
+cp /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/sample_1/merged_annotations/seq_ID_masked_conSeq/ltr_complete_ltr_minLen200.fasta ./
+cp /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/sample_1/merged_annotations/seq_ID_masked_conSeq/solo_ltr_lib.fasta ./
+
+# or using the regular alignment script:
+
+./scripts/09_aligment_mafft.sh oriOrder_ltr_completePlusSolo_minLen200_2.fasta
+
+# only Reference sequences:
+cat /proj/uppstore2017160/b2017172/private/pombeTE/sample_1/merged_annotations/seq_ID_masked_conSeq/ltr_ref_complete_ltr_minLen200.fasta /proj/uppstore2017160/b2017172/private/pombeTE/sample_1/merged_annotations/seq_ID_masked_conSeq/ref_solo_ltr_lib.fasta > ref_ltr_completePlusSolo_minLen200_2.fasta
+#let i = 1 | g/^>/s/^>/\=printf(">%02d_", i)/ | let i = i+1
+./scripts/09_aligment_mafft.sh ref_ltr_completePlusSolo_minLen200_2.fasta
+
+
+### Extracting sequences based on EDTA output:
+######## using masked annotation but with consensus sequences during the masking!! ########
+
+ls -1 ../*ed.fa | sed 's/\.\.\///g' | sed 's/_ed\.fa//g' | grep -v JB870 > list_samples.txt
+cp ../EDTA_flo/dir_ext_masked_conSeq_*_liftover/all_parallel_final_*_refCoor.txt .
+
+conda activate env_others
+for sample in $( cat list_samples.txt )
+do 
+echo $sample
+#produce total annotation table
+python ./extract_seq_EDTA.py ./EDTA_flo/$sample.fasta all_parallel_final_$sample"_"refCoor.txt $sample allSeq_EDTA_masked_conSeq 0
+python ./extract_seq_EDTA.py ./EDTA_flo/$sample.fasta all_parallel_final_$sample"_"refCoor.txt $sample allSeq_EDTA_masked_conSeq 200
+done
+
+
+for sample in $( cat list_samples.txt )
+do 
+echo $sample
+mkdir repeatMask_$sample"_"core
+# identify full-length LTRs and solo LTRs per sequence:
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib ../alig_all_CORE_tf_masked_conSeq_minLen1500_break.fasta ../$sample"_allSeq_EDTA_masked_conSeq_minLen"0.fasta
+mv $sample"_"allSeq_EDTA_masked_conSeq_minLen0.fasta.out ../$sample"_"allSeq_EDTA_masked_conSeq_minLen0.core
+mkdir repeatMask_$sample"_"Fltr
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib solo_ltr_lib.fasta $sample"_allSeq_EDTA_masked_conSeq_minLen"0.fasta
+mv $sample"_"allSeq_EDTA_masked_conSeq_minLen0.fasta.out ../$sample"_"allSeq_EDTA_masked_conSeq_minLen0.Fltr
+done
+
+# in a job:
+for sample in $( cat list_samples.txt )
+do 
+sbatch ./repeatMask_LTR_core.sh $sample
+done
+
+
+for sample in $( cat list_samples.txt )
+do 
+echo $sample
+mkdir repeatMask_$sample"_"FullLtr
+# identify full-length LTRs and solo LTRs per sequence:
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib ../tf_simpleID.fasta ../$sample"_allSeq_EDTA_masked_conSeq_minLen"0.fasta
+mv $sample"_"allSeq_EDTA_masked_conSeq_minLen0.fasta.out ../$sample"_"allSeq_EDTA_masked_conSeq_minLen0.fullltr
+done
+
+for sample in $( cat list_samples.txt )
+do 
+sbatch ./repeatMask_FullLTR.sh $sample
+done
+
+
+for sample in $( cat list_samples.txt )
+do 
+sed -e 's/^[[:space:]]*//' $sample"_"allSeq_EDTA_masked_conSeq_minLen0.Fltr | sed -e 's/[[:space:]*]//' |  sed -e 's/[[:space:]]*$//' | tr -s " " | grep -v perc | grep -v score | grep -v "^$" | sed 's/ /\t/g' | awk '{if ($7-$6>200) print $0}'  > $sample"_"allSeq_EDTA_masked_conSeq_minLen0.Fltr_min200
+sed -e 's/^[[:space:]]*//' $sample"_"allSeq_EDTA_masked_conSeq_minLen0.core | sed -e 's/[[:space:]*]//' |  sed -e 's/[[:space:]]*$//' | tr -s " " | grep -v perc | grep -v score | grep -v "^$" | sed 's/ /\t/g' | awk '{if ($7-$6>500) print $0}' > $sample"_"allSeq_EDTA_masked_conSeq_minLen0.core_min500
+python ./seq_withLTR.py allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor.txt $sample"_"allSeq_EDTA_masked_conSeq_minLen0.core_min500 $sample"_"allSeq_EDTA_masked_conSeq_minLen0.Fltr_min200 > allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns.txt 
+done
+
+
+
+echo $sample
+mkdir repeatMask_$sample"_"wtf
+blastn -query ../$sample"_allSeq_EDTA_masked_conSeq_minLen"0.fasta -db ../all_wtf_pom_kam.fasta -evalue 0.00000001 -outfmt "6 qseqid sseqid pident length mismatch gaps qstart qend sstart send slen qlen evalue bitscore" > blast_wtfInTFseq.$sample.txt
+cat blast_wtfInTFseq.$sample.txt | awk '{if($4>700) print $1}' | sort | uniq > wtfSeq_ID.$sample.txt
+# makeblastdb -in SPNCRNA.fasta -dbtype nucl
+blastn -query ../$sample"_allSeq_EDTA_masked_conSeq_minLen"0.fasta -db ../SPNCRNA.fasta -evalue 0.00000001 -outfmt "6 qseqid sseqid pident length mismatch gaps qstart qend sstart send slen qlen evalue bitscore" > blast_SPNCRNAInTFseq.$sample.txt
+cat blast_SPNCRNAInTFseq.$sample.txt | awk '{if($4>700) print $1}' | sort | uniq > SPNCRNASeq_ID.$sample.txt
+cat wtfSeq_ID.$sample.txt SPNCRNASeq_ID.$sample.txt | sort | uniq > ../wtfSeq_SPNCRNASeq_ID.$sample.txt
+
+for sample in $( cat list_samples.txt )
+do 
+sbatch ./identify_wtf_other.sh $sample
+done
+
+for sample in $( cat list_samples.txt )
+do 
+grep -v "Parent=" allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns.txt | grep -vP "0\t0\t0$" | awk '{if ($5-$4>200) print $16}' > allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns_seqIDFilter.txt
+num_seq=$( grep -wf allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns_seqIDFilter.txt $sample"_"allSeq_EDTA_masked_conSeq_minLen0.fullltr | grep -wvf wtfSeq_SPNCRNASeq_ID.$sample.txt | wc -l )
+len_seq=$( grep -wf allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns_seqIDFilter.txt $sample"_"allSeq_EDTA_masked_conSeq_minLen0.fullltr | grep -wvf wtfSeq_SPNCRNASeq_ID.$sample.txt | awk 'BEGIN {sum_value=0} ; {sum_value+=($7-$6)} ; END {print sum_value}'  )
+echo -e $sample"\t"$num_seq"\t"$len_seq >> summary_LTRSeq_EDTA.txt
+done
+
+
+
+
+# There are some difference between methods
+# Checking missing sequences:
+First analyses data:
+./LTR_flo_allSeq/JB874_TE_annotation_refCoor_Masked_conSeq_ed.bed
+# EDTA data:
+./merged_annotations_EDTA/allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_JB874_refCoor_ltrColumns.txt
+
+# checking missing chromosomes:
+for sample in $( cat list_samples.txt )
+do
+sample1=$(awk '{print $1}' allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns.txt | sort | uniq | wc -l)
+sample2=$(awk '{print $1}' ./LTR_flo_allSeq/$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed | sort | uniq | grep -v or_chr | wc -l)
+echo $sample $sample1 $sample2
+echo "############"
+echo $sample 
+echo "############"
+awk '{print $1}' allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns.txt | sort | uniq
+echo "############"
+awk '{print $1}' ./LTR_flo_allSeq/$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed | sort | uniq | grep -v or_chr
+done
+
+# Identify missing sequences from EDTA analysis:
+sample=JB943
+
+for sample in $( cat list_samples.txt )
+do
+grep -v or_chr ./LTR_flo_allSeq/$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed | awk '{if ($3-$2>200) print $1"\t"$2-1"\t"$3"\t"$4}' > oriAnalysis_$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed
+grep -vP "0\t0\t0$" ./merged_annotations_EDTA/allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns.txt | grep -v "Parent="  | awk '{if ($5-$4>200) print $1"\t"$4-1"\t"$5"\t"$16}' > allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_short.bed
+bedtools intersect -loj -a allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_short.bed -b oriAnalysis_$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed  | awk '{print $0"\t"$3-$2"\t"$7-$6}' | grep -vP "\t0$" | awk '{print $4}' | sort | uniq -c | sed -e 's/^[[:space:]]*//' | awk -F  " " '{print $2"\t"$1}' > EDTASeq_in_OriAnalysis_$sample"_"foundSeq.txt
+bedtools intersect -loj -a allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_short.bed -b oriAnalysis_$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed  | awk '{print $0"\t"$3-$2"\t"$7-$6}' | grep -P "\t0$" | awk '{print $4"\t0"}' > EDTASeq_in_OriAnalysis_$sample"_"missingSeq.txt
+cat EDTASeq_in_OriAnalysis_$sample"_"foundSeq.txt EDTASeq_in_OriAnalysis_$sample"_"missingSeq.txt | awk '{print $2}' | sort | uniq -c | sed -e 's/^[[:space:]]*//' | awk -F  " " '{print $2"\t"$1"\tEDTA"}' > sum_table_EDTASeq_in_OriAnalysis_$sample.txt
+bedtools intersect -loj -b allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_short.bed -a oriAnalysis_$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed  | awk '{print $0"\t"$3-$2"\t"$7-$6}' | grep -vP "\t0$" | awk '{print $4}' | sort | uniq -c | sed -e 's/^[[:space:]]*//' | awk -F  " " '{print $2"\t"$1}' > OriAnalysisSeq_in_EDTA_$sample"_"foundSeq.txt
+bedtools intersect -loj -b allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_short.bed -a oriAnalysis_$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed  | awk '{print $0"\t"$3-$2"\t"$7-$6}' | grep -P "\t0$" | awk '{print $4"\t0"}' > OriAnalysisSeq_in_EDTA_$sample"_"missingSeq.txt
+cat OriAnalysisSeq_in_EDTA_$sample"_"foundSeq.txt OriAnalysisSeq_in_EDTA_$sample"_"missingSeq.txt | awk '{print $2}' | sort | uniq -c | sed -e 's/^[[:space:]]*//' | awk -F  " " '{print $2"\t"$1"\tOriAnalysis"}' > sum_table_OriAnalysisSeq_in_EDTA_$sample.txt
+done
+
+grep "" sum_table_* | sed 's/sum_table_OriAnalysisSeq_in_EDTA_//g' | sed 's/sum_table_EDTASeq_in_OriAnalysis_//g' | sed 's/.txt:/\t/g' > sum_table_Allcomparison_OriAnalysisSeq_EDTA.txt
+
+# this analyses shows some sequences found in the EDTA analysis not found in out original analyses:
+# I added these sequences to the initial table:
+
+conda activate r_env
+for sample in $( cat list_samples.txt )
+do
+awk '{print $1}' EDTASeq_in_OriAnalysis_$sample"_"missingSeq.txt > EDTASeq_in_OriAnalysis_$sample"_"missingSeq_sym.txt
+grep -v "Parent=" ./merged_annotations_EDTA/allSeq_EDTA_masked_conSeq_minLen0_all_parallel_final_$sample"_"refCoor_ltrColumns.txt | grep -wf EDTASeq_in_OriAnalysis_$sample"_"missingSeq_sym.txt | awk '{print $1"\t"$4"\t"$5"\t"$16"\t"$10"\t"$11"\t"$12"\t"$13"\t"$14"\t"$15"\t"$7}' > $sample"_"EDTA_missingSeq_TE_annotation__refCoor_Masked_conSeq.bed
+Rscript --vanilla ./compile_liftOverAnnotation_TE_EDTA_missingSeq.R $sample 
+done
+
+grep "" *_EDTA_missingSeq_TE_annotation__refCoor_Masked_conSeq_ed.bed | sed 's/_EDTA_missingSeq_TE_annotation__refCoor_Masked_conSeq_ed.bed:/\t/g' | grep -v "or_chr" > EDTA_all_missingSeq_TE_annotation__refCoor_Masked_conSeq.bed
+
+
+######## analysis only for TE elements:
+ls -1 ../LTR_flo/*.fasta | sed 's/\.\.\/LTR_flo\///g' | sed 's/\.fasta//g' | grep -v JB870 > list_samples.txt
+# cp ../LTR_flo/*_annotation_refCoor_Masked_conSeq_edSim.bed .
+
+module load bioinfo-tools python/2.7.15 biopython/1.73
+
+for sample in $( cat list_samples.txt )
+do echo $sample
+grep -v "or_chr" /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/all21_samples/LTR_flo/$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed > $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed
+cp /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/all21_samples/LTR_flo/$sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed .
+#
+python ./extract_seq_TE.py ../LTR_finder/$sample.fasta $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed $sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 700
+python ./extract_seq_TE.py ../LTR_finder/$sample.fasta $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed $sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 2000
+python ./extract_seq_TE.py ../LTR_finder/$sample.fasta $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed $sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 3000
+rm $sample"_"*bed
+done
+#produce total annotation table
+
+cat *tf_masked_conSeq_minLen700.fasta > all_tf_masked_conSeq_minLen700.fasta
+cat *tf_masked_conSeq_minLen3000.fasta > all_tf_masked_conSeq_minLen2000.fasta
+cat *tf_masked_conSeq_minLen3000.fasta > all_tf_masked_conSeq_minLen3000.fasta
+
+## min seq 700
+module load bioinfo-tools blast/2.9.0+ python/2.7.15 biopython/1.73 
+# makeblastdb -in consensus_ltr.fasta -dbtype nucl
+blastn -query all_tf_masked_conSeq_minLen700.fasta -db consensus_ltr.fasta -evalue 0.00000001 -outfmt "6 qseqid sseqid pident length mismatch gaps qstart qend sstart send slen qlen evalue bitscore" > blast_ltrInTFseq.txt
+# makeblastdb -in all_wtf_pom_kam.fasta -dbtype nucl
+blastn -query all_tf_masked_conSeq_minLen700.fasta -db all_wtf_pom_kam.fasta -evalue 0.00000001 -outfmt "6 qseqid sseqid pident length mismatch gaps qstart qend sstart send slen qlen evalue bitscore" > blast_wtfInTFseq.txt
+cat blast_wtfInTFseq.txt | awk '{if($4>700) print $1}' | sort | uniq > wtfSeq_ID.txt
+# makeblastdb -in SPNCRNA.fasta -dbtype nucl
+blastn -query all_tf_masked_conSeq_minLen700.fasta -db SPNCRNA.fasta -evalue 0.00000001 -outfmt "6 qseqid sseqid pident length mismatch gaps qstart qend sstart send slen qlen evalue bitscore" > blast_SPNCRNAInTFseq.txt
+cat blast_SPNCRNAInTFseq.txt | awk '{if($4>700) print $1}' | sort | uniq > SPNCRNASeq_ID.txt
+grep ">" all_tf_masked_conSeq_minLen700.fasta | sed 's/>//g' > tf_seqID.txt
+
+echo "21_JB929_III_2021930_40_5786" > tf_seqID_excluded.txt
+
+module load R/3.4.3 MariaDB/10.2.11
+R_LIBS_USER=/home/sergio/R/libraries_Rackham/3.4
+
+Rscript --vanilla ./annotate_LTR_seq.R blast_ltrInTFseq.txt wtfSeq_ID.txt SPNCRNASeq_ID.txt tf_seqID.txt tf_seqID_excluded.txt annotation_tf_breakPoints.txt extraTF_Seq.txt
+
+module load bioinfo-tools python/2.7.15 biopython/1.73 
+python ./TE_break_seq.py all_tf_masked_conSeq_minLen700.fasta annotation_tf_breakPoints.txt extraTF_Seq.txt all_tf_masked_conSeq_minLen700_break.fasta 700 
+
+## min seq 3000
+module load bioinfo-tools blast/2.9.0+ python/2.7.15 biopython/1.73 
+# makeblastdb -in consensus_ltr.fasta -dbtype nucl
+blastn -query all_tf_masked_conSeq_minLen3000.fasta -db consensus_ltr.fasta -evalue 0.00000001 -outfmt "6 qseqid sseqid pident length mismatch gaps qstart qend sstart send slen qlen evalue bitscore" > blast_ltrInTFseq_3000.txt
+# makeblastdb -in all_wtf_pom_kam.fasta -dbtype nucl
+blastn -query all_tf_masked_conSeq_minLen3000.fasta -db all_wtf_pom_kam.fasta -evalue 0.00000001 -outfmt "6 qseqid sseqid pident length mismatch gaps qstart qend sstart send slen qlen evalue bitscore" > blast_wtfInTFseq_3000.txt
+# makeblastdb -in SPNCRNA.fasta -dbtype nucl
+blastn -query all_tf_masked_conSeq_minLen3000.fasta -db SPNCRNA.fasta -evalue 0.00000001 -outfmt "6 qseqid sseqid pident length mismatch gaps qstart qend sstart send slen qlen evalue bitscore" > blast_SPNCRNAInTFseq_3000.txt
+cat blast_SPNCRNAInTFseq.txt | awk '{if($4>700) print $1}' | sort | uniq > SPNCRNASeq_ID_3000.txt
+grep ">" all_tf_masked_conSeq_minLen3000.fasta | sed 's/>//g' > tf_seqID_3000.txt
+
+echo "21_JB929_III_2021930_40_5786" > tf_seqID_excluded_3000.txt
+
+module load R/3.4.3 MariaDB/10.2.11
+R_LIBS_USER=/home/sergio/R/libraries_Rackham/3.4
+
+Rscript --vanilla ./annotate_LTR_seq.R blast_ltrInTFseq_3000.txt wtfSeq_ID_3000.txt SPNCRNASeq_ID_3000.txt tf_seqID_3000.txt tf_seqID_excluded_3000.txt annotation_tf_breakPoints_3000.txt extraTF_Seq_3000.txt
+
+module load bioinfo-tools python/2.7.15 biopython/1.73 
+
+python ./TE_break_seq.py all_tf_masked_conSeq_minLen3000.fasta annotation_tf_breakPoints_3000.txt extraTF_Seq_3000.txt all_tf_masked_conSeq_minLen3000_break.fasta 3000
+
+
+# alignment:
+sbatch ./scripts/09_aligment_mafft.sh all_tf_masked_conSeq_minLen700_break.fasta
+sbatch ./scripts/09_aligment_mafft.sh all_tf_masked_conSeq_minLen3000_break.fasta
+
+# I did another aligment including refernce sequences for TF2, TF1 and LTR sequences:
+cat tf_reference_seq_simple.fasta all_tf_masked_conSeq_minLen700_break.fasta > all_tf_masked_conSeq_minLen700_break_plusRef.fasta
+sbatch ./scripts/09_aligment_mafft.sh all_tf_masked_conSeq_minLen700_break_plusRef.fasta 
+
+cat tf_reference_seq_simple.fasta all_tf_masked_conSeq_minLen3000_break.fasta > all_tf_masked_conSeq_minLen3000_break_plusRef.fasta
+sbatch ./scripts/09_aligment_mafft.sh all_tf_masked_conSeq_minLen3000_break_plusRef.fasta 
+
+
+
+# Solo LTR linked to LTR elements:
+# The idea is to use that sequence as a base to align non-completed LTRs.
+cp ./LTR_alignments/alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta  .
+sed -i 's/_R_//g' alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta 
+sed -i 's/-//g' alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta 
+module load bioinfo-tools RepeatMasker/4.0.8
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib reference_soloLTRseq.fasta alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta 
+mv alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta.out soloLTR_minLen3000_RepeatMasker.out
+grep -v "^$" soloLTR_minLen3000_RepeatMasker.out | grep -v "class/family" | grep -v "repeat" | awk '{print $5"\t"$6"\t"$7"\t"$10}' > annotation_table_ltf_simpleID.fasta.out2
+grep -v "^$" soloLTR_minLen3000_RepeatMasker.out | grep -v "class/family" | grep -v "repeat" | awk '{print $5"\t"$6"\t"$7}' > annotation_table_ltf_simpleID.fasta.bed
+module load bioinfo-tools BEDTools/2.27.1
+bedtools merge -i annotation_table_ltf_simpleID.fasta.bed > annotation_table_ltf_simpleID.fasta.out
+awk '{print $4}' annotation_table_ltf_simpleID.fasta.out2 | sort | uniq > list_ltr_included.txt
+module load biopython
+python ./08_extract_seq_masked_conSeq_completed_ltr.py alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta annotation_table_ltf_simpleID.fasta.out ltr complete_ltr 200 
+sbatch ./scripts/09_aligment_mafft.sh ltr_complete_ltr_minLen200.fasta 
+
+
+# another version using only known refernce seqiences:
+module load bioinfo-tools RepeatMasker/4.0.8
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib soloLTR_refSeq.fasta alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta 
+mv alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta.out soloLTR_minLen3000_RepeatMasker.out
+grep -v "^$" alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta.out | grep -v "class/family" | grep -v "repeat" | awk '{if ($2<2) print $5"\t"$6"\t"$7"\t"$10}' > annotation_table_ltf_simpleID.fasta.out 
+
+awk '{print $4}' annotation_table_ltf_simpleID.fasta.out | sort | uniq > list_ltr_included.txt
+module load python biopython
+python ./08_extract_seq_masked_conSeq_completed_ltr.py alig_all_tf_masked_conSeq_minLen3000_break_plusRef.fasta annotation_table_ltf_simpleID.fasta.out ltr complete_ltr 200 
+
+sbatch ./scripts/09_aligment_mafft.sh ltr_complete_ltr_minLen200.fasta 
+
+
+## by TF group:
+#  sequences for each group were extracted using the R script: Plots_completedLTR.R locally
+awk '{ sub("\r$", ""); print }' TF1_non_mixed.fasta > TF1_non_mixed_linux.fasta
+mv TF1_non_mixed_linux.fasta TF1_non_mixed.fasta
+sed -i 's/-//g' TF1_non_mixed.fasta  
+sed -i 's/^$//g' TF1_non_mixed.fasta  
+sbatch ./scripts/09_aligment_mafft.sh TF1_non_mixed.fasta
+
+awk '{ sub("\r$", ""); print }' TF2_non_mixed.fasta > TF2_non_mixed_linux.fasta
+mv TF2_non_mixed_linux.fasta TF2_non_mixed.fasta
+sed -i 's/-//g' TF2_non_mixed.fasta  
+sed -i 's/^$//g' TF2_non_mixed.fasta  
+sbatch ./scripts/09_aligment_mafft.sh TF2_non_mixed.fasta
+
+
+# The second round using as reference all sequences as library in RepeatMasker:
+
+# SOLO LTR linked to LTR elements:
+# The idea is to use that sequence as a base to align non-completed LTRs.
+cp ./LTR_alignments_allSeq/alig_all_tf_masked_conSeq_minLen1500_break_plusRef.fasta  .
+sed -i 's/_R_//g' alig_all_tf_masked_conSeq_minLen1500_break_plusRef.fasta 
+sed -i 's/-//g' alig_all_tf_masked_conSeq_minLen1500_break_plusRef.fasta 
+module load bioinfo-tools RepeatMasker/4.0.8
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib reference_soloLTRseq.fasta alig_all_tf_masked_conSeq_minLen1500_break_plusRef.fasta 
+mv alig_all_tf_masked_conSeq_minLen1500_break_plusRef.fasta.out soloLTR_minLen1500_RepeatMasker.out
+grep -v "^$" soloLTR_minLen1500_RepeatMasker.out | grep -v "class/family" | grep -v "repeat" | awk '{print $5"\t"$6"\t"$7"\t"$10}' > annotation_table_ltf_simpleID.fasta.out2
+grep -v "^$" soloLTR_minLen1500_RepeatMasker.out | grep -v "class/family" | grep -v "repeat" | awk '{print $5"\t"$6"\t"$7}' > annotation_table_ltf_simpleID.fasta.bed
+module load bioinfo-tools BEDTools/2.27.1
+bedtools merge -i annotation_table_ltf_simpleID.fasta.bed > annotation_table_ltf_simpleID.fasta.out
+awk '{print $4}' annotation_table_ltf_simpleID.fasta.out2 | sort | uniq > list_ltr_included.txt
+module load biopython
+python ./08_extract_seq_masked_conSeq_completed_ltr.py alig_all_tf_masked_conSeq_minLen1500_break_plusRef.fasta annotation_table_ltf_simpleID.fasta.out ltr complete_ltr 200 
+sbatch ./scripts/09_aligment_mafft.sh ltr_complete_ltr_minLen200.fasta 
+# adding reference sequences: 
+cat soloLTR_refSeq.fasta ltr_complete_ltr_minLen200.fasta > ltr_complete_ltr_minLen200_plusRefseq.fasta 
+sbatch ./scripts/09_aligment_mafft.sh ltr_complete_ltr_minLen200_plusRefseq.fasta
+
+
+
+# the previous seccion was to extract sequences of 5' or 3' LTR associated with full-legth Tf elements. The following seccion now includes all solo LTRs.
+cp ./LTR_alignments_allSeq/all_tf_masked_conSeq_minLen100.fasta  .
+module load bioinfo-tools RepeatMasker/4.0.8
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib reference_soloLTRseq.fasta all_tf_masked_conSeq_minLen100.fasta
+
+mv all_tf_masked_conSeq_minLen100.fasta.out soloLTR_minLen100_RepeatMasker.out
+grep -v "^$" soloLTR_minLen100_RepeatMasker.out | grep -v "class/family" | grep -v "repeat" | awk '{print $5"\t"$6"\t"$7"\t"$10}' > annotation_table_ltf_simpleID.fasta.out2
+grep -v "^$" soloLTR_minLen100_RepeatMasker.out | grep -v "class/family" | grep -v "repeat" | awk '{print $5"\t"$6"\t"$7}' > annotation_table_ltf_simpleID.fasta.bed
+# I merged annotations which overlap by more than 150 bp:
+# I also excluded sequences shorter than 100 bp
+module load bioinfo-tools BEDTools/2.27.1
+bedtools merge -d -150 -i annotation_table_ltf_simpleID.fasta.bed | awk '{if($3-$2>100) print $0}' > annotation_table_ltf_simpleID_100.fasta.out
+awk '{print $4}' annotation_table_ltf_simpleID.fasta.out2 | sort | uniq > list_ltr_included.txt
+module load biopython
+python ./08_extract_seq_masked_conSeq_completed_ltr.py all_tf_masked_conSeq_minLen100.fasta annotation_table_ltf_simpleID_100.fasta.out ltr allSolo_ltr 100 
+
+# to produce an aligment:
+sbatch ./scripts/09_aligment_mafft.sh ltr_allSolo_ltr_minLen100.fasta
+
+# adding refernce sequences:
+cat soloLTR_refSeq.fasta ltr_allSolo_ltr_minLen100.fasta > ltr_allSolo_ltr_minLen100_plusRefseq.fasta
+sbatch ./scripts/09_aligment_mafft.sh ltr_allSolo_ltr_minLen100_plusRefseq.fasta
+
+
+# using the second round using as reference all sequences as library in RepeatMasker:
+
+ls -1 ../LTR_flo_allSeq/*.fasta | sed 's/\.\.\/LTR_flo_allSeq\///g' | sed 's/\.fasta//g' | grep -v JB870 > list_samples.txt
+
+module load bioinfo-tools python/2.7.15 biopython/1.73
+for sample in $( cat list_samples.txt )
+do echo $sample
+grep -v "or_chr" /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/all21_samples/LTR_flo_allSeq/$sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed > $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed
+cp /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/all21_samples/LTR_flo_allSeq/$sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed .
+#
+python ./extract_seq_TE.py ../LTR_finder/$sample.fasta $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed $sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 100
+python ./extract_seq_TE.py ../LTR_finder/$sample.fasta $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed $sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 700
+python ./extract_seq_TE.py ../LTR_finder/$sample.fasta $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed $sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 1500
+python ./extract_seq_TE.py ../LTR_finder/$sample.fasta $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed $sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 2000
+python ./extract_seq_TE.py ../LTR_finder/$sample.fasta $sample"_"TE_annotation_refCoor_Masked_conSeq_ed.bed $sample"_"TE_annotation_refCoor_Masked_conSeq_edSim.bed $sample tf_masked_conSeq 3000
+rm $sample"_"*bed
+done
+#produce total annotation table
+cat *tf_masked_conSeq_minLen100.fasta > all_tf_masked_conSeq_minLen100.fasta
+cat *tf_masked_conSeq_minLen700.fasta > all_tf_masked_conSeq_minLen700.fasta
+cat *tf_masked_conSeq_minLen1500.fasta > all_tf_masked_conSeq_minLen1500.fasta
+cat *tf_masked_conSeq_minLen2000.fasta > all_tf_masked_conSeq_minLen2000.fasta
+cat *tf_masked_conSeq_minLen3000.fasta > all_tf_masked_conSeq_minLen3000.fasta
+
+# I produce a table summary to compare with EDTA results:
+
+reference_seq=tf_simpleID.fasta
+
+for sample in $( cat list_samples.txt )
+do 
+echo $sample
+mkdir repeatMask_$sample"_"FullLtr
+# identify full-length LTRs and solo LTRs per sequence:
+RepeatMasker -pa 1 -a -nolow -norna -dir ./ -lib ../$reference_seq ../$sample"_"tf_masked_conSeq_minLen100.fasta
+mv $sample"_"tf_masked_conSeq_minLen100.fasta.out ../$sample"_"tf_masked_conSeq_minLen100.fullltr
+done
+
+for sample in $( cat list_samples.txt )
+do 
+sbatch ./repeatMask_FullLTR_ori.sh $sample
+done
+
+for sample in $( cat list_samples.txt )
+do 
+echo $sample
+python ./fasta_len.py $sample"_"tf_masked_conSeq_minLen100.fasta $sample > summary_LTRSeq_ori_$sample.txt
+awk '{print $5}' $sample"_"tf_masked_conSeq_minLen100.fullltr | sort | uniq > $sample"_"tf_masked_conSeq_minLen100.seqWithLTR.txt
+num_seq=$( awk '{if ($2>200) print $1}' summary_LTRSeq_ori_$sample.txt | grep -wf $sample"_"tf_masked_conSeq_minLen100.seqWithLTR.txt | sort | uniq | wc -l )
+len_seq=$( grep -wf $sample"_"tf_masked_conSeq_minLen100.seqWithLTR.txt summary_LTRSeq_ori_$sample.txt | awk 'BEGIN {sum_value=0} ; {if ($2>200) sum_value+=($2)} ; END {print sum_value}' )
+echo -e $sample"\t"$num_seq"\t"$len_seq >> all_summary_LTRSeq_ori.txt
+done
+
+
+#### Phylogenetic analyses
+## Completed LTR sequences:
+# TF sequences:
+# RaxML
+cp "./LTR_alignments/alig_all_tf_masked_conSeq_minLen3000_break.fasta" .
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh $PWD"/"alig_all_tf_masked_conSeq_minLen3000_break.fasta 
+
+# RaxML-NG
+cp "./LTR_alignments/alig_all_tf_masked_conSeq_minLen3000_break_ed.fasta" .
+sbatch ./RAxML_NG.sh $PWD"/"alig_all_tf_masked_conSeq_minLen3000_break_ed.fasta
+
+# IQTree
+cp "./LTR_alignments/alig_all_tf_masked_conSeq_minLen3000_break_ed.fasta" .
+sbatch ./IQTree.sh alig_all_tf_masked_conSeq_minLen3000_break_ed.fasta tf_3000
+
+cp "./LTR_alignments/alig_all_tf_masked_conSeq_minLen3000_break.fasta" .
+sbatch ./IQTreebb.sh alig_all_tf_masked_conSeq_minLen3000_break.fasta tf_3000 
+
+
+## Solo LTR
+## Solo LTR assotiated to completed LTR elements
+
+## Completed LTR sequences:
+# TF sequences:
+# RaxML
+cp ./solo_LTR/alig_ltr_complete_ltr_minLen200.fasta .
+sbatch ./RAxML_FullAnalyses_quickUppmax.sh $PWD"/"alig_ltr_complete_ltr_minLen200.fasta
+# job 12482011
+
+# # RaxML-NG
+# cd /proj/uppstore2017159/b2014286_nobackup/private/pac_bio/02_TE/all21_samples/solo_LTR_trees/RaxML_NG
+# cp "./solo_LTR/alig_ltr_complete_ltr_minLen200.fasta" .
+# sbatch ./RAxML_NG.sh $PWD"/"alig_ltr_complete_ltr_minLen200.fasta
+
+# IQTree
+cp "./solo_LTR/alig_ltr_complete_ltr_minLen200.fasta" .
+sbatch ./IQTree.sh alig_ltr_complete_ltr_minLen200.fasta soloLTR_200
+
+cp "./solo_LTR/alig_ltr_complete_ltr_minLen200.fasta" .
+sbatch ./IQTreebb.sh alig_ltr_complete_ltr_minLen200.fasta soloLTR_200 
+# jobs: 12310476
+
+
+# this version used all the complete LTR from the data as reference to estract LTR from completed TF sequeces:
+cp "./solo_LTR/alig_ltr_complete_ltr_minLen200.fasta" .
+sbatch ./IQTreebb.sh alig_ltr_complete_ltr_minLen200.fasta soloLTR_200 
+# jobs: 12481995
+
+
+# the tree was processed with an R script: 
+# cd C:\Users\sertu336\LRZ Sync+Share\TEs\all_Samples\Phylogenies\Solo_LTR_completed\RaxML
+# I also estomated kimura 2 P distances using MEGA-X
+
+
+# SFS for SNPS:
+
+conda activate env_others
+awk '{print $1"\t"$4"\t"$5}' Schizosaccharomyces_pombe.ASM294v2.22.gff3 > Schizosaccharomyces_pombe.ASM294v2.22.bed
+grep -v AB325691 Schizosaccharomyces_pombe.ASM294v2.22.bed | grep -v "^#" | sort | uniq > ed_Schizosaccharomyces_pombe.ASM294v2.22.bed
+
+sed 's/_I//g' /dss/dssfs01/pr53da/pr53da-dss-0005/nobackup/private/pac_bio/02_TE/all21_samples/All_Illu_LR_trees/PCAs/both_I.vcf | sed 's/LL/_ILL/g'  > both_I.vcf
+sed 's/_II//g' /dss/dssfs01/pr53da/pr53da-dss-0005/nobackup/private/pac_bio/02_TE/all21_samples/All_Illu_LR_trees/PCAs/both_II.vcf > both_II.vcf
+sed 's/_III//g' /dss/dssfs01/pr53da/pr53da-dss-0005/nobackup/private/pac_bio/02_TE/all21_samples/All_Illu_LR_trees/PCAs/both_III.vcf > both_III.vcf
+
+bgzip < both_I.vcf  > variant_SNPs_I.vcf.gz
+bgzip < both_II.vcf  > variant_SNPs_II.vcf.gz
+bgzip < both_III.vcf  > variant_SNPs_III.vcf.gz
+
+tabix variant_SNPs_III.vcf.gz
+tabix variant_SNPs_II.vcf.gz
+tabix variant_SNPs_I.vcf.gz
+
+bcftools merge --force-samples variant_SNPs_*.vcf.gz -o tem_variant_SNPs_all.vcf
+grep "^#" tem_variant_SNPs_all.vcf | grep -v "CHROM" > variant_SNPs_all.vcf
+grep "CHROM" both_III.vcf >> variant_SNPs_all.vcf
+grep -v "^#" both_III.vcf >> variant_SNPs_all.vcf
+grep -v "^#" both_II.vcf >> variant_SNPs_all.vcf
+grep -v "^#" both_I.vcf >> variant_SNPs_all.vcf
+
+# I removed from the vcf file annotated regions. This includes genes, promotors, introns, repeats:
+# this leafs 48948 SNPs after filtering out of a possible 249645 Sites in all 161 individuals.
+
+vcftools --vcf variant_SNPs_all.vcf --exclude-bed ed_Schizosaccharomyces_pombe.ASM294v2.22.bed --indv JB22_EBC2 --indv JB879 --indv JB760_EBC074 --indv JB938 --indv JB869 --indv JB4_EBC069 --indv JB918_EBC111 --indv JB1110_EBC121 --indv JB873_EBC095 --indv JB929 --indv JB934_EBC115 --indv JB943 --indv JB900_EBC131 --indv JB900_EBC132 --indv JB854 --indv JB1180 --indv JB858_EBC087 --indv JB842_EBC080 --indv JB840 --indv JB872_EBC094 --indv JB853_EBC085 --indv JB939_EBC119 --indv JB874 --indv JB1205_EBC137 --indv JB1197_EBC135 --indv JB953 --indv JB837 --indv JB1206_EBC138 --indv JB864 --indv JB758 --indv DY34373 --indv DY39827 --out variant_SNPs_all.LRSamles.noncoding.vcf --mac 1 --recode --keep-INFO-all
+# After filtering, kept 36758 out of a possible 353067 Sites
+
+vcftools --vcf variant_SNPs_all.vcf --indv JB22_EBC2 --indv JB879 --indv JB760_EBC074 --indv JB938 --indv JB869 --indv JB4_EBC069 --indv JB918_EBC111 --indv JB1110_EBC121 --indv JB873_EBC095 --indv JB929 --indv JB934_EBC115 --indv JB943 --indv JB900_EBC131 --indv JB900_EBC132 --indv JB854 --indv JB1180 --indv JB858_EBC087 --indv JB842_EBC080 --indv JB840 --indv JB872_EBC094 --indv JB853_EBC085 --indv JB939_EBC119 --indv JB874 --indv JB1205_EBC137 --indv JB1197_EBC135 --indv JB953 --indv JB837 --indv JB1206_EBC138 --indv JB864 --indv JB758 --indv DY34373 --indv DY39827 --out variant_SNPs_all.LRSamles.allSNPs.vcf --mac 1 --recode --keep-INFO-all
+# After filtering, kept 209690 out of a possible 353067 Sites
+
+
+# then I used those VCF files to produce SFS in R (locally: \Dropbox\uppsala\Repeats_pombe_TE_Wtf\Analyses\all_Samples\Annotation)
+
+
